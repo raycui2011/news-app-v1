@@ -30,8 +30,7 @@ https://developer.nytimes.com/docs/articlesearch-product/1/overview
 Grab the repo and install the dependencies.
 
 ```
-In the project directory, you can run
-### `git clone git@github.com:raycui2011/news-app-v1.git` 
-
-and run command  ### `composer install` to install all the dependencies.
+`git clone git@github.com:raycui2011/news-app-v1.git` 
+`cd news-app-v1`
+`composer install`
 ```
