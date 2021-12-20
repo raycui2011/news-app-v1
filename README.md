@@ -43,3 +43,16 @@ Run the application with:
 ```bash
 php artisan serve
 ```
+
+Runs the app in the development mode.<br />
+Lanuch postman, and 
+Set the request type to POST and the request URL to http://127.0.0.1:8000/api/news. Then set Body to form-data. see below
+| key                 | value         |
+| ----------------    |:-------------:|
+| term                | australia     |
+| page                | 1             |
+|filter[0][news_desk] |Sports,Foreign |
+|filter[1][glocations]|NEW YORK CITY  |
+
+
+Also you can send a POST request like http://127.0.0.1:8000/api/news
