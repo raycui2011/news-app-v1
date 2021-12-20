@@ -23,8 +23,6 @@ https://developer.nytimes.com/docs/articlesearch-product/1/overview
 
 
 
-## Available Scripts
-
 ## Setup
 
 Grab the repo and install the dependencies.
@@ -33,4 +31,15 @@ Grab the repo and install the dependencies.
 `git clone git@github.com:raycui2011/news-app-v1.git` 
 `cd news-app-v1`
 `composer install`
+```
+### Environment variables
+
+Rename `.env.example` to `.env`
+
+## Running your app
+
+Run the application with:
+
+```bash
+php artisan serve
 ```
