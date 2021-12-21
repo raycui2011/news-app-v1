@@ -51,7 +51,7 @@ class ApiController extends Controller
                 $cacheKey = $this->getCacheKey($searchTerm);
                 //read data from cache
                 $data = Cache_Record::where('key', '=', $cacheKey)->orderByDesc('id')->get();
-                if (!$data) {
+                if (count($data) == 0) {
                   foreach ($this->newsSources as $newsSource => $sourceData) {
                       $this->newsServices->setApiUrl($urlData[$newsSource]['url']);
                       $data[$newsSource] = $this->newsServices->getNews();
