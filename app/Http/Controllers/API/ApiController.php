@@ -10,37 +10,65 @@ use App\Services\NewsService;
 use Illuminate\Support\Facades\App;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Cache;
+use App\Interfaces\CacheRepositoryInterface;
+use App\Models\Cache as Cache_Record;
+
 
 class ApiController extends Controller
 {
-
+    private CacheRepositoryInterface $cacheRepository;
     protected $url;
     protected $newsServices;
     //nytimes, guardianapi
     protected $newsSources;
+    protected $timeInMinutes = 5 * 60;
 
-    public function __construct(NewsService $news)
+
+    // data is not found using our $cache_key
+    // it will return null value for given $cache_key
+
+    public function __construct(NewsService $news, CacheRepositoryInterface $cacheRepository)
     {
         $this->newsServices = $news;
-        $this->newsSources = [ 'nytimes'     => ['api_key' => Config::get('services.nytimes.key'), 'url' => Config::get('services.nytimes.url')],
+        $this->newsSources = [ 'nytimes' => ['api_key' => Config::get('services.nytimes.key'), 'url' => Config::get('services.nytimes.url')],
           'guardianapi' => ['api_key' => Config::get('services.guardianapi.key'), 'url' => Config::get('services.guardianapi.url')]
         ];
+        $this->cacheRepository = $cacheRepository;
     }
 
     /**
     * Display a listing of the news.
-    *
+    * @param App\Http\Requests\SendNewsApiRequest
     * @return \Illuminate\Http\Response
     */
     public function list(SendNewsApiRequest $request)
     {
         try {
-          $urlData = $this->retriveUrl($request);
-          $this->newsServices->setApiUrl($urlData['nytimes']['url']);
-          $nytimesResponseObj = $this->newsServices->getNews();
-          $this->newsServices->setApiUrl($urlData['guardianapi']['url']);
-          $guardianResponseObj = $this->newsServices->getNews();
-          //$results = ['data' => ];
+                // first try to get the data from the cache
+                $searchTerm = $request->input('term');
+                $urlData = $this->retriveUrl($request);
+                $cacheKey = $this->getCacheKey($searchTerm);
+                //read data from cache
+
+                if (Cache::has($cacheKey)) {
+                  //$data = Cache::get($cacheKey);
+                  $data = Cache_Record::where('key', '=', $cacheKey)->orderByDesc('id')->get();
+                } else {
+                  foreach ($this->newsSources as $newsSource => $sourceData) {
+                      $this->newsServices->setApiUrl($urlData[$newsSource]['url']);
+                      $data[$newsSource] = $this->newsServices->getNews();
+                  }
+                  // save the respoonse to cache
+                  //Cache::put($cacheKey, $data, $this->timeInMinutes);
+
+                  /* use the database to store the cache data */
+                  $arr = ['key' => $cacheKey, 'value' => serialize($data), 'expiration' => $this->timeInMinutes];
+                  // create a cache record and save in the db
+                  Cache_Record::create($arr);
+
+
+                }
         } catch (Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
                 return response()->json(['error' => 'Entry for '.str_replace('App\\', '', $exception->getModel()).' not found'], 404);
@@ -49,11 +77,27 @@ class ApiController extends Controller
             }
         }
 
-        $data = ['nytimes' =>$nytimesResponseObj->response, 'guardian' =>$guardianResponseObj->response->results];
         return response()->json(['success' => true, 'data' => $data], 200);
+    }
+
+    /**
+    * gerenate the cache key based on the search term
+    *  todo could be better using all the post data
+    * @param string
+    * @return string
+    **/
+    private function getCacheKey($term) {
+        return md5($term);
+    }
+
+    private function hasCacheData($key) {
+      return Cache::has($key);
+
+      //Students::where('name', '=', 'John Doe')->first();
     }
     /**
     * This function is used to generate api url for new yorks times and guardianapi
+    * @param App\Http\Requests\SendNewsApiRequest
     * @return array
     */
 
@@ -77,7 +121,7 @@ class ApiController extends Controller
     /**
     * This function is used to generate filtere string for new yorks times
     * for example fq=news_desk:("Sports") AND glocations:("NEW YORK CITY")
-    *
+    * @param array
     * @return string $filterStr
     */
     private function getFilterForNYTimes($filters) {
