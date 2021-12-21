@@ -50,8 +50,8 @@ class ApiController extends Controller
                 $urlData = $this->retriveUrl($request);
                 $cacheKey = $this->getCacheKey($searchTerm);
                 //read data from cache
-                $data = Cache_Record::where('key', '=', $cacheKey)->orderByDesc('id')->get();
-                if (count($data) == 0) {
+                $cacheData = Cache_Record::where('key', '=', $cacheKey)->orderByDesc('id')->get();
+                if (count($cacheData) == 0) {
                   foreach ($this->newsSources as $newsSource => $sourceData) {
                       $this->newsServices->setApiUrl($urlData[$newsSource]['url']);
                       $data[$newsSource] = $this->newsServices->getNews();
@@ -63,8 +63,8 @@ class ApiController extends Controller
                   $arr = ['key' => $cacheKey, 'value' => serialize($data), 'expiration' => $this->timeInMinutes];
                   // create a cache record and save in the db
                   Cache_Record::create($arr);
-
-
+                } else {
+                    $data = unserialize($cacheData[0]['value']);
                 }
         } catch (Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
