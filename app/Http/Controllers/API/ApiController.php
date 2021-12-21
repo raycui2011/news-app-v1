@@ -50,11 +50,8 @@ class ApiController extends Controller
                 $urlData = $this->retriveUrl($request);
                 $cacheKey = $this->getCacheKey($searchTerm);
                 //read data from cache
-
-                if (Cache::has($cacheKey)) {
-                  //$data = Cache::get($cacheKey);
-                  $data = Cache_Record::where('key', '=', $cacheKey)->orderByDesc('id')->get();
-                } else {
+                $data = Cache_Record::where('key', '=', $cacheKey)->orderByDesc('id')->get();
+                if (!$data) {
                   foreach ($this->newsSources as $newsSource => $sourceData) {
                       $this->newsServices->setApiUrl($urlData[$newsSource]['url']);
                       $data[$newsSource] = $this->newsServices->getNews();
@@ -92,9 +89,8 @@ class ApiController extends Controller
 
     private function hasCacheData($key) {
       return Cache::has($key);
-
-      //Students::where('name', '=', 'John Doe')->first();
     }
+    
     /**
     * This function is used to generate api url for new yorks times and guardianapi
     * @param App\Http\Requests\SendNewsApiRequest
