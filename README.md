@@ -27,9 +27,32 @@ https://developer.nytimes.com/docs/articlesearch-product/1/overview
 
 Grab the repo and install the dependencies.
 
+```bash
+git clone git@github.com:raycui2011/news-app-v1.git
+cd news-app-v1
+composer install
 ```
-In the project directory, you can run
-### `git clone git@github.com:raycui2011/news-app-v1.git`
+### Environment variables
 
-and run command  ### `composer install` to install all the dependencies.
+Rename `.env.example` to `.env`
+
+## Running your app
+
+Run the application with:
+
+```bash
+php artisan serve
 ```
+
+Runs the app in the development mode.<br />
+Lanuch postman, and
+Set the request type to POST and the request URL to http://127.0.0.1:8000/api/news. Then set Body to form-data. see below
+| key                 | value         |
+| ----------------    |:-------------:|
+| term                | australia     |
+| page                | 1             |
+|filter[0][news_desk] |Sports,Foreign |
+|filter[1][glocations]|NEW YORK CITY  |
+
+
+Also you can send a POST request like http://127.0.0.1:8000/api/news
